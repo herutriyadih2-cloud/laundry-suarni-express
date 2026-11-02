@@ -1,6 +1,6 @@
 name: Deploy to Hostinger
 
-on:
+'on':
   push:
     branches:
       - main
@@ -54,9 +54,14 @@ jobs:
           path: ./public/
 
       - name: Verify website is reachable (optional)
-        if: ${{ secrets.WEBSITE_URL != '' }}
+        env:
+          WEBSITE_URL: ${{ secrets.WEBSITE_URL }}
         run: |
+          if [ -z "$WEBSITE_URL" ]; then
+            echo "WEBSITE_URL secret not set, skipping verification."
+            exit 0
+          fi
           echo "Waiting 15 seconds for deployment to propagate..."
           sleep 15
-          echo "Checking ${{ secrets.WEBSITE_URL }} ..."
-          curl -sfSL -o /dev/null -w "HTTP Status: %{http_code}\n" "${{ secrets.WEBSITE_URL }}"
+          echo "Checking $WEBSITE_URL ..."
+          curl -sfSL -o /dev/null -w "HTTP Status: %{http_code}\n" "$WEBSITE_URL"
