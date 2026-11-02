@@ -83,3 +83,6 @@ Karena ini website statis, cara termudah adalah upload file ke folder `public_ht
 ## Kontak
 
 WhatsApp: [0813 5742 6883](https://wa.me/6281357426883)
+
+
+<!-- Deployment triggered -->
