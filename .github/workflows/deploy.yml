@@ -15,6 +15,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Verify required secrets exist
+        run: |
+          missing=0
+          if [ -z "${{ secrets.FTP_SERVER }}" ]; then echo "::error::Secret FTP_SERVER is missing"; missing=1; fi
+          if [ -z "${{ secrets.FTP_USERNAME }}" ]; then echo "::error::Secret FTP_USERNAME is missing"; missing=1; fi
+          if [ -z "${{ secrets.FTP_PASSWORD }}" ]; then echo "::error::Secret FTP_PASSWORD is missing"; missing=1; fi
+          if [ "$missing" -eq 1 ]; then exit 1; fi
+          echo "All required secrets are present."
+
+      - name: List files to deploy
+        run: |
+          echo "Files in ./public/ that will be deployed:"
+          find ./public -type f | sort
+          echo ""
+          echo "Total files: $(find ./public -type f | wc -l)"
+
       - name: Deploy to Hostinger
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
@@ -25,7 +41,22 @@ jobs:
           port: 21
           local-dir: ./public/
           server-dir: /public_html/
+          log-level: verbose
           exclude: |
             **/.git*
             **/.git*/**
             **/node_modules/**
+
+      - name: Upload deployed files as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployed-files
+          path: ./public/
+
+      - name: Verify website is reachable (optional)
+        if: ${{ secrets.WEBSITE_URL != '' }}
+        run: |
+          echo "Waiting 15 seconds for deployment to propagate..."
+          sleep 15
+          echo "Checking ${{ secrets.WEBSITE_URL }} ..."
+          curl -sfSL -o /dev/null -w "HTTP Status: %{http_code}\n" "${{ secrets.WEBSITE_URL }}"
